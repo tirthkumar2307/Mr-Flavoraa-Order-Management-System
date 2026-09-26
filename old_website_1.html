@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mr Flavoraa — Order Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#fff8f0; --ink:#211712; --char:#2a1e18; --smoke:#8a7a70;
+  --line:#ecdfd2; --chili:#e2481f; --chili-dim:#f6d9cf; --lime:#a8c400;
+  --lime-dim:#e9f0c2; --card:#ffffff; --gold:#e0a334;
+  box-sizing:border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#17110d; --ink:#f4ece3; --char:#f4ece3; --smoke:#a6968a;
+    --line:#3a2c22; --card:#241a14; --chili-dim:#3c2018; --lime-dim:#2a3208;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#17110d; --ink:#f4ece3; --char:#f4ece3; --smoke:#a6968a;
+  --line:#3a2c22; --card:#241a14; --chili-dim:#3c2018; --lime-dim:#2a3208;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;}
+html{scroll-padding-top: env(safe-area-inset-top, 0px);}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased;
+  overscroll-behavior-y:none;
+}
+h1,h2,h3,.num{font-family:'Archivo Black',sans-serif; font-weight:400;}
+.app{max-width:480px; margin:0 auto; min-height:100%; display:flex; flex-direction:column;}
+.topbar{
+  padding:16px 20px 14px; display:flex; align-items:center; justify-content:space-between;
+  padding-top: calc(16px + env(safe-area-inset-top, 0px));
+}
+.brand{display:flex; align-items:center; gap:10px;}
+.brand-logo{width:48px; height:48px; border-radius:12px; object-fit:contain; background:var(--card); border:1px solid var(--line); padding:4px; flex:none;}
+.brand h1{font-size:17px; margin:0; letter-spacing:.2px;}
+.brand p{margin:1px 0 0; font-size:11.5px; color:var(--smoke); font-weight:600;}
+.clock{font-size:12px; color:var(--smoke); text-align:right; font-weight:600;}
+.screen{flex:1; padding:0 16px 100px; display:none;}
+.screen.on{display:block; animation:rise .28s ease;}
+@keyframes rise{from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:translateY(0)}}
+@media (prefers-reduced-motion: reduce){.screen.on{animation:none;}}
+
+/* Dashboard */
+.stat-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:6px 0 18px;}
+.stat{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px 16px;}
+.stat .label{font-size:11.5px; color:var(--smoke); font-weight:700; text-transform:uppercase; letter-spacing:.4px;}
+.stat .num{font-size:26px; margin-top:4px;}
+.stat.sales .num{color:var(--chili);}
+.stat.active .num{color:var(--gold);}
+.stat.done .num{color:#5c9a3c;}
+.big-cta{
+  width:100%; padding:20px; border:none; border-radius:18px; background:var(--chili);
+  color:#fff; font-family:'Archivo Black'; font-size:18px; margin-bottom:12px;
+  display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer;
+}
+.tile-row{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;}
+.tile{
+  background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px;
+  text-align:left; cursor:pointer; font-family:'Inter'; color:var(--ink);
+}
+.tile .ic{font-size:20px;}
+.tile .t{display:block; font-weight:700; margin-top:8px; font-size:14.5px;}
+.tile .badge{display:inline-block; margin-top:4px; font-size:12px; color:var(--smoke); font-weight:600;}
+h2.h{font-size:19px; margin:14px 0 12px;}
+
+/* New order */
+.cat-tabs{display:flex; gap:8px; overflow-x:auto; padding:6px 0 12px; -webkit-overflow-scrolling:touch;}
+.cat-tabs::-webkit-scrollbar{display:none;}
+.cat-tab{flex:none; padding:9px 16px; border-radius:100px; border:1px solid var(--line); background:var(--card); font-weight:700; font-size:13.5px; color:var(--smoke); cursor:pointer;}
+.cat-tab.on{background:var(--ink); color:var(--paper); border-color:var(--ink);}
+.item-card{
+  display:flex; align-items:center; justify-content:space-between; background:var(--card);
+  border:1px solid var(--line); border-radius:14px; padding:13px 14px; margin-bottom:9px;
+}
+.item-card .name{font-weight:700; font-size:14.5px;}
+.item-card .price{color:var(--smoke); font-size:12.5px; font-weight:600; margin-top:2px;}
+.qty{display:flex; align-items:center; gap:12px;}
+.qbtn{width:32px; height:32px; border-radius:9px; border:none; font-size:17px; font-weight:800; cursor:pointer;}
+.qbtn.minus{background:var(--line); color:var(--ink);}
+.qbtn.plus{background:var(--chili); color:#fff;}
+.qty .n{font-family:'Archivo Black'; min-width:16px; text-align:center; font-size:15px;}
+
+.cart-bar{
+  position:fixed; left:0; right:0; bottom:66px; max-width:480px; margin:0 auto;
+  background:var(--card); border-top:1px solid var(--line); border-radius:18px 18px 0 0;
+  box-shadow:0 -6px 24px rgba(0,0,0,.08); padding:12px 18px calc(12px + env(safe-area-inset-bottom,0px));
+  display:none;
+}
+.cart-bar.show{display:block;}
+.cart-bar .row{display:flex; justify-content:space-between; font-size:13px; color:var(--smoke); padding:2px 0;}
+.cart-bar .total-row{display:flex; justify-content:space-between; align-items:center; margin-top:6px; padding-top:8px; border-top:1px dashed var(--line);}
+.cart-bar .total-row .num{font-size:20px;}
+.save-btn{background:var(--chili); color:#fff; border:none; padding:10px 20px; border-radius:12px; font-weight:800; font-size:14px; cursor:pointer;}
+input.namefield{
+  width:100%; padding:14px 16px; border-radius:14px; border:1px solid var(--line);
+  background:var(--card); color:var(--ink); font-size:15px; font-weight:600; margin-bottom:6px;
+}
+label.lbl{font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; color:var(--smoke);}
+
+/* Order cards (active/completed/cancelled) */
+.order-card{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px 16px; margin-bottom:12px; border-left:5px solid var(--gold);}
+.order-card.completed{border-left-color:#5c9a3c;}
+.order-card.cancelled{border-left-color:var(--smoke); opacity:.75;}
+.order-card .head{display:flex; justify-content:space-between; align-items:baseline;}
+.order-card .oid{font-weight:800; font-size:15px;}
+.order-card .time{font-size:11.5px; color:var(--smoke); font-weight:600;}
+.order-card .cust{font-size:13px; color:var(--smoke); margin-top:1px; font-weight:600;}
+.line-item{display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--line);}
+.line-item:last-of-type{border-bottom:none;}
+.chk{width:22px; height:22px; border-radius:7px; border:2px solid var(--line); flex:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px; color:#fff;}
+.chk.done{background:#5c9a3c; border-color:#5c9a3c;}
+.li-name{flex:1; font-size:14px; font-weight:600;}
+.li-name.done{text-decoration:line-through; color:var(--smoke);}
+.order-total{display:flex; justify-content:space-between; margin-top:8px; font-weight:800; font-size:15px;}
+.ready-flag{background:var(--lime-dim); color:#4a6100; font-weight:800; font-size:12.5px; text-align:center; padding:7px; border-radius:10px; margin-top:10px;}
+.btn-row{display:flex; gap:8px; margin-top:10px;}
+.btn-row button{flex:1; padding:11px; border-radius:11px; border:none; font-weight:800; font-size:13.5px; cursor:pointer;}
+.btn-cancel{background:var(--chili-dim); color:var(--chili);}
+.btn-complete{background:#5c9a3c; color:#fff;}
+.btn-complete:disabled{opacity:.4;}
+.empty{text-align:center; padding:60px 20px; color:var(--smoke);}
+.empty .ic{font-size:36px; display:block; margin-bottom:10px;}
+
+/* Nav */
+.navbar{
+  position:fixed; left:0; right:0; bottom:0; max-width:480px; margin:0 auto;
+  background:var(--card); border-top:1px solid var(--line);
+  display:flex; padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.nav-btn{flex:1; border:none; background:none; padding:10px 4px 8px; display:flex; flex-direction:column; align-items:center; gap:3px; color:var(--smoke); font-size:10.5px; font-weight:700; cursor:pointer;}
+.nav-btn .ic{font-size:19px;}
+.nav-btn.on{color:var(--chili);}
+
+/* Sheet / modal */
+.overlay{position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; z-index:20; align-items:flex-end;}
+.overlay.show{display:flex;}
+.sheet{background:var(--paper); width:100%; max-width:480px; margin:0 auto; border-radius:20px 20px 0 0; padding:18px 20px calc(20px + env(safe-area-inset-bottom,0px)); max-height:80vh; overflow-y:auto;}
+.sheet h3{margin:0 0 14px;}
+.sheet-item{width:100%; text-align:left; padding:13px 14px; background:var(--card); border:1px solid var(--line); border-radius:13px; margin-bottom:9px; font-weight:700; font-size:14px; color:var(--ink); cursor:pointer; display:flex; justify-content:space-between; align-items:center;}
+.confirm-box{background:var(--paper); text-align:center;}
+.confirm-box p{color:var(--smoke); font-size:14px; margin-bottom:18px;}
+.confirm-actions{display:flex; gap:10px;}
+.confirm-actions button{flex:1; padding:13px; border-radius:12px; border:none; font-weight:800; cursor:pointer;}
+.keep{background:var(--line); color:var(--ink);}
+.confirmcancel{background:var(--chili); color:#fff;}
+
+/* Report */
+.rep-row{display:flex; justify-content:space-between; padding:11px 0; border-bottom:1px solid var(--line); font-size:14px; font-weight:600;}
+.rep-row .v{font-family:'Archivo Black'; font-size:15px;}
+.pop-item{display:flex; justify-content:space-between; padding:9px 0; font-size:13.5px; font-weight:600; color:var(--char);}
+.pop-item .rank{color:var(--chili); font-weight:800; margin-right:8px;}
+.dl-btn{width:100%; padding:15px; border-radius:14px; border:none; background:var(--ink); color:var(--paper); font-weight:800; font-size:14.5px; margin-top:14px; cursor:pointer;}
+.toast{position:fixed; bottom:90px; left:50%; transform:translateX(-50%); background:var(--ink); color:var(--paper); padding:11px 20px; border-radius:100px; font-weight:700; font-size:13.5px; z-index:30; opacity:0; transition:opacity .25s; pointer-events:none;}
+.toast.show{opacity:1;}
+.section-link{display:block; padding:14px 4px; font-weight:700; font-size:14.5px; color:var(--ink); text-decoration:none; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; cursor:pointer;}
+.section-link .arrow{color:var(--smoke);}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <div class="topbar">
+    <div class="brand">
+      <img class="brand-logo" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 80'%3E%3Crect width='200' height='80' rx='12' fill='%23ffffff'/%3E%3Ctext x='18' y='54' font-family='Arial Black, sans-serif' font-size='38' fill='%237b1e2b' font-weight='900'%3EMr%3C/text%3E%3Ctext x='72' y='54' font-family='Arial Black, sans-serif' font-size='38' fill='%23f5c518' font-weight='900' stroke='%23211' stroke-width='1.2'%3EFlavoraa%3C/text%3E%3C/svg%3E" alt="Mr Flavoraa logo">
+      <div><h1>MR FLAVORAA</h1><p>Order Management</p></div>
+    </div>
+    <div class="clock" id="clock"></div>
+  </div>
+
+  <!-- HOME -->
+  <div class="screen on" id="screen-home">
+    <div class="stat-grid">
+      <div class="stat"><div class="label">Today's Orders</div><div class="num" id="s-total">0</div></div>
+      <div class="stat sales"><div class="label">Today's Sales</div><div class="num" id="s-sales">₹0</div></div>
+      <div class="stat active"><div class="label">Active</div><div class="num" id="s-active">0</div></div>
+      <div class="stat done"><div class="label">Completed</div><div class="num" id="s-done">0</div></div>
+    </div>
+    <button class="big-cta" onclick="go('neworder')">➕ NEW ORDER</button>
+    <div class="tile-row">
+      <button class="tile" onclick="go('active')"><span class="ic">🟡</span><span class="t">Active Orders</span><span class="badge" id="t-active">0 preparing</span></button>
+      <button class="tile" onclick="go('completed')"><span class="ic">✅</span><span class="t">Completed</span><span class="badge" id="t-done">0 today</span></button>
+      <button class="tile" onclick="go('cancelled')"><span class="ic">❌</span><span class="t">Cancelled</span><span class="badge" id="t-cancel">0 today</span></button>
+      <button class="tile" onclick="go('report')"><span class="ic">📊</span><span class="t">Daily Report</span><span class="badge">Sales & items</span></button>
+    </div>
+  </div>
+
+  <!-- NEW ORDER -->
+  <div class="screen" id="screen-neworder">
+    <h2 class="h">New order</h2>
+    <label class="lbl">Customer name</label>
+    <input class="namefield" id="custname" placeholder="e.g. Rahul" autocomplete="off">
+    <div class="cat-tabs" id="cattabs"></div>
+    <div id="itemlist"></div>
+  </div>
+
+  <!-- ACTIVE -->
+  <div class="screen" id="screen-active">
+    <h2 class="h">Active orders</h2>
+    <div id="activelist"></div>
+  </div>
+
+  <!-- COMPLETED -->
+  <div class="screen" id="screen-completed">
+    <h2 class="h">Completed orders</h2>
+    <div id="completedlist"></div>
+  </div>
+
+  <!-- CANCELLED -->
+  <div class="screen" id="screen-cancelled">
+    <h2 class="h">Cancelled orders</h2>
+    <div id="cancelledlist"></div>
+  </div>
+
+  <!-- REPORT -->
+  <div class="screen" id="screen-report">
+    <h2 class="h">Daily report — <span id="rep-date"></span></h2>
+    <div class="rep-row"><span>Total orders</span><span class="v" id="r-total">0</span></div>
+    <div class="rep-row"><span>Completed</span><span class="v" id="r-done">0</span></div>
+    <div class="rep-row"><span>Cancelled</span><span class="v" id="r-cancel">0</span></div>
+    <div class="rep-row"><span>Active</span><span class="v" id="r-active">0</span></div>
+    <div class="rep-row"><span>Total sales</span><span class="v" id="r-sales">₹0</span></div>
+    <h3 style="margin:20px 0 4px; font-size:15px;">Most ordered items</h3>
+    <div id="r-popular"></div>
+    <button class="dl-btn" onclick="downloadCSV()">📥 DOWNLOAD TODAY'S DATA (CSV)</button>
+  </div>
+
+  <!-- MORE -->
+  <div class="screen" id="screen-more">
+    <h2 class="h">More</h2>
+    <a class="section-link" onclick="go('cancelled')">Cancelled orders <span class="arrow">›</span></a>
+    <a class="section-link" onclick="openHistory()">Order history <span class="arrow">›</span></a>
+    <a class="section-link" onclick="go('report')">Daily report <span class="arrow">›</span></a>
+    <a class="section-link" onclick="exportBackup()">Export backup (JSON) <span class="arrow">›</span></a>
+    <a class="section-link" onclick="confirmClear()">Clear all data <span class="arrow">›</span></a>
+  </div>
+
+  <div class="cart-bar" id="cartbar">
+    <div id="cartrows"></div>
+    <div class="total-row">
+      <div><div style="font-size:11px;color:var(--smoke);font-weight:700;">TOTAL</div><div class="num" id="carttotal">₹0</div></div>
+      <button class="save-btn" onclick="saveOrder()">SAVE ORDER</button>
+    </div>
+  </div>
+
+  <div class="navbar">
+    <button class="nav-btn on" data-nav="home" onclick="go('home')"><span class="ic">🏠</span>Home</button>
+    <button class="nav-btn" data-nav="neworder" onclick="go('neworder')"><span class="ic">➕</span>New</button>
+    <button class="nav-btn" data-nav="active" onclick="go('active')"><span class="ic">🟡</span>Active</button>
+    <button class="nav-btn" data-nav="completed" onclick="go('completed')"><span class="ic">✅</span>Done</button>
+    <button class="nav-btn" data-nav="more" onclick="go('more')"><span class="ic">☰</span>More</button>
+  </div>
+</div>
+
+<div class="overlay" id="overlay"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- Data ---------- */
+const MENU = [
+  {cat:"🥞 Dosas", vlabels:["Oil","Butter"], items:[
+    {n:"Plain Dosa", v:[70,100]},
+    {n:"Masala Dosa", v:[80,110]},
+    {n:"Masala Cheese Dosa", v:[110,140]},
+    {n:"Mysore Masala Dosa", v:[90,120]},
+    {n:"Plain Garlic Dosa", v:[80,110]},
+    {n:"Cheese Garlic Dosa", v:[100,130]},
+    {n:"Cheese Dosa", v:[110,140]},
+    {n:"Cheese Chilli Dosa", v:[110,140]},
+    {n:"Cheese Tomato Dosa", v:[110,140]},
+    {n:"Cheese Onion Tomato Dosa", v:[130,160]},
+    {n:"Masala Fry", v:[130,160]},
+    {n:"Pizza Dosa", v:[140,170]}
+  ]},
+  {cat:"🧇 Waffles", vlabels:["Half Moon","Full Moon"], items:[
+    {n:"Classic Chocolate Waffle", v:[100,200]},
+    {n:"White Chocolate Waffle", v:[100,200]},
+    {n:"Oreo Crunch Waffle", v:[120,220]},
+    {n:"KitKat Chocolate Waffle", v:[120,220]},
+    {n:"Nutella Waffle", v:[140,240]},
+    {n:"Chocolate Loaded Waffle", v:[140,240]},
+    {n:"Red Velvet Waffle", v:[165,265]}
+  ]},
+  {cat:"🥪 Bun Samosa", items:[
+    {n:"Classic Bun Samosa", p:45},
+    {n:"Peri Peri Bun Samosa", p:55},
+    {n:"Cheese Bun Samosa", p:75},
+    {n:"Cheese Mayo Bun Samosa", p:85},
+    {n:"Peri Peri Cheese Bun Samosa", p:95},
+    {n:"Classic Cheese Bun Samosa", p:85}
+  ]},
+  {cat:"🍕 Italian", items:[
+    {n:"Classic Veg Pizza", p:99},
+    {n:"Margarita Pizza", p:110},
+    {n:"Veg Exotic Pizza", p:130},
+    {n:"Cheese Corn Pizza", p:110},
+    {n:"Cheese Garlic Bread", p:69},
+    {n:"Exotic Veg Garlic Bread", p:89},
+    {n:"Cheese Broccoli Pizza", p:130}
+  ]},
+  {cat:"🍞 Toasties", items:[
+    {n:"Cheese Toast", p:70},
+    {n:"Cheese Chilly Toast", p:80},
+    {n:"Cheese Corn Toast", p:90},
+    {n:"Cheesy Broccoli Burst", p:130},
+    {n:"Exotic Veg Toast", p:150}
+  ]},
+  {cat:"🍟 Golden Batons", items:[
+    {n:"Classic Fries Bowl", p:70},
+    {n:"Masala Fries Bowl", p:80},
+    {n:"Peri-Peri Fries Bowl", p:90},
+    {n:"Cheesy Fries Bowl", p:100},
+    {n:"Peri-Peri Veg and Cheese Fries Bowl", p:140},
+    {n:"Classic Potato Wedges", p:90},
+    {n:"Masala Potato Wedges", p:100},
+    {n:"Peri-Peri Potato Wedges", p:110}
+  ]},
+  {cat:"🥤 Beverages", items:[
+    {n:"Water Bottle", custom:true},
+    {n:"Buttermilk", p:20},
+    {n:"Coldrink – Bottle", p:20},
+    {n:"Coldrink – Can", p:70}
+  ]},
+  {cat:"🍨 Desserts", items:[
+    {n:"Ice-Cream", p:59},
+    {n:"Hot Gulab Jamun", p:49},
+    {n:"Hot Gulab Jamun with Ice-Cream", p:79}
+  ]}
+];
+let customPrice = {}; // name -> entered price for custom items
+const LS_KEY = "flavoraa_orders_v1";
+let orders = JSON.parse(localStorage.getItem(LS_KEY) || "[]");
+let cart = {}; // name -> {qty, price}
+let activeCat = MENU[0].cat;
+let pendingCancelId = null;
+
+function save(){ localStorage.setItem(LS_KEY, JSON.stringify(orders)); }
+function todayStr(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function todayOrders(){ return orders.filter(o=>o.date===todayStr()); }
+function fmtMoney(n){ return "₹"+n.toLocaleString("en-IN"); }
+function fmtTime(ts){ return new Date(ts).toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit"}); }
+
+/* ---------- Nav ---------- */
+function go(name){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on"));
+  document.getElementById("screen-"+name).classList.add("on");
+  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.toggle("on", b.dataset.nav===name));
+  document.getElementById("cartbar").classList.toggle("show", name==="neworder" && Object.keys(cart).length>0);
+  if(name==="home") renderHome();
+  if(name==="active") renderActive();
+  if(name==="completed") renderCompleted();
+  if(name==="cancelled") renderCancelled();
+  if(name==="report") renderReport();
+  if(name==="neworder") renderMenu();
+  window.scrollTo(0,0);
+}
+
+/* ---------- Clock ---------- */
+function tickClock(){
+  const d=new Date();
+  document.getElementById("clock").textContent = d.toLocaleDateString("en-IN",{day:"2-digit",month:"short"})+" · "+d.toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit"});
+}
+setInterval(tickClock,15000); tickClock();
+
+/* ---------- Home ---------- */
+function renderHome(){
+  const t = todayOrders();
+  const done = t.filter(o=>o.status==="completed");
+  const act = t.filter(o=>o.status==="active");
+  const canc = t.filter(o=>o.status==="cancelled");
+  document.getElementById("s-total").textContent = t.length;
+  document.getElementById("s-sales").textContent = fmtMoney(done.reduce((s,o)=>s+o.total,0));
+  document.getElementById("s-active").textContent = act.length;
+  document.getElementById("s-done").textContent = done.length;
+  document.getElementById("t-active").textContent = act.length+" preparing";
+  document.getElementById("t-done").textContent = done.length+" today";
+  document.getElementById("t-cancel").textContent = canc.length+" today";
+}
+
+/* ---------- New order ---------- */
+function esc(s){ return s.replace(/'/g,"\\'"); }
+function stepper(key, price){
+  const qty = cart[key] ? cart[key].qty : 0;
+  return `<div class="qty">
+    <button class="qbtn minus" onclick="changeQty('${esc(key)}',${price},-1)">−</button>
+    <span class="n">${qty}</span>
+    <button class="qbtn plus" onclick="changeQty('${esc(key)}',${price},1)">+</button>
+  </div>`;
+}
+function renderMenu(){
+  const tabs = document.getElementById("cattabs");
+  tabs.innerHTML = "";
+  MENU.forEach(section=>{
+    const b = document.createElement("button");
+    b.className = "cat-tab"+(section.cat===activeCat?" on":"");
+    b.textContent = section.cat;
+    b.onclick = ()=>{ activeCat = section.cat; renderMenu(); };
+    tabs.appendChild(b);
+  });
+  const section = MENU.find(s=>s.cat===activeCat);
+  const list = document.getElementById("itemlist");
+  list.innerHTML = "";
+  section.items.forEach(item=>{
+    const card = document.createElement("div");
+    card.className = "item-card";
+    if(item.custom){
+      const cp = customPrice[item.n] || "";
+      card.innerHTML = `<div style="flex:1;"><div class="name">${item.n}</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+          <span class="price" style="margin:0;">₹</span>
+          <input type="number" min="0" inputmode="numeric" value="${cp}" placeholder="MRP"
+            style="width:70px;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font-weight:700;"
+            onchange="setCustomPrice('${esc(item.n)}', this.value)">
+        </div></div>
+        <div id="stepper-${item.n.replace(/[^a-zA-Z0-9]/g,'')}">${stepper(item.n, customPrice[item.n]||0)}</div>`;
+    } else if(item.v){
+      const labels = item.vlabels || section.vlabels;
+      card.innerHTML = `<div style="flex:1;">
+        <div class="name">${item.n}</div>
+        <div style="margin-top:8px; display:flex; flex-direction:column; gap:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span class="price" style="margin:0;">${labels[0]} · ${fmtMoney(item.v[0])}</span>
+            ${stepper(item.n+" ("+labels[0]+")", item.v[0])}
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span class="price" style="margin:0;">${labels[1]} · ${fmtMoney(item.v[1])}</span>
+            ${stepper(item.n+" ("+labels[1]+")", item.v[1])}
+          </div>
+        </div></div>`;
+      card.style.alignItems = "flex-start";
+    } else {
+      card.innerHTML = `<div><div class="name">${item.n}</div><div class="price">${fmtMoney(item.p)}</div></div>
+        ${stepper(item.n, item.p)}`;
+    }
+    list.appendChild(card);
+  });
+  renderCart();
+}
+function setCustomPrice(name, val){
+  const price = parseFloat(val) || 0;
+  customPrice[name] = price;
+  if(cart[name]) cart[name].price = price;
+  renderMenu();
+}
+function changeQty(key, price, delta){
+  if(delta > 0 && (!price || price<=0)){ toast("Enter a price first"); return; }
+  if(!cart[key]) cart[key] = {qty:0, price};
+  cart[key].qty += delta;
+  cart[key].price = price;
+  if(cart[key].qty <= 0) delete cart[key];
+  renderMenu();
+}
+function renderCart(){
+  const rows = document.getElementById("cartrows");
+  const entries = Object.entries(cart);
+  document.getElementById("cartbar").classList.toggle("show", entries.length>0);
+  rows.innerHTML = entries.map(([name,c])=>`<div class="row"><span>${name} ×${c.qty}</span><span>${fmtMoney(c.price*c.qty)}</span></div>`).join("");
+  const total = entries.reduce((s,[,c])=>s+c.price*c.qty,0);
+  document.getElementById("carttotal").textContent = fmtMoney(total);
+}
+function saveOrder(){
+  const name = document.getElementById("custname").value.trim();
+  if(!name){ toast("Enter customer name"); return; }
+  if(Object.keys(cart).length===0){ toast("Add at least one item"); return; }
+  const t = todayStr();
+  const orderNo = todayOrders().length + 1;
+  const items = Object.entries(cart).map(([n,c])=>({name:n, qty:c.qty, price:c.price, ready:false}));
+  const total = items.reduce((s,i)=>s+i.price*i.qty,0);
+  orders.push({
+    id: Date.now(), num: orderNo, date: t, customer:name, items, total,
+    createdAt: Date.now(), completedAt:null, status:"active"
+  });
+  save();
+  cart = {}; document.getElementById("custname").value = "";
+  toast("Order #"+String(orderNo).padStart(3,"0")+" saved");
+  go("active");
+}
+
+/* ---------- Active orders ---------- */
+function renderActive(){
+  const list = document.getElementById("activelist");
+  const act = todayOrders().filter(o=>o.status==="active").sort((a,b)=>b.createdAt-a.createdAt);
+  if(act.length===0){ list.innerHTML = `<div class="empty"><span class="ic">🟡</span>No active orders right now.</div>`; return; }
+  list.innerHTML = act.map(o=>{
+    const allReady = o.items.every(i=>i.ready);
+    return `<div class="order-card">
+      <div class="head"><span class="oid">#${String(o.num).padStart(3,"0")} — ${o.customer}</span><span class="time">${fmtTime(o.createdAt)}</span></div>
+      ${o.items.map((it,idx)=>`<div class="line-item">
+          <div class="chk ${it.ready?"done":""}" onclick="toggleItem(${o.id},${idx})">${it.ready?"✓":""}</div>
+          <div class="li-name ${it.ready?"done":""}">${it.name} ×${it.qty}</div>
+        </div>`).join("")}
+      <div class="order-total"><span>Total</span><span>${fmtMoney(o.total)}</span></div>
+      ${allReady?'<div class="ready-flag">🟢 ALL ITEMS READY</div>':""}
+      <div class="btn-row">
+        <button class="btn-cancel" onclick="askCancel(${o.id})">❌ Cancel</button>
+        <button class="btn-complete" ${allReady?"":"disabled"} onclick="completeOrder(${o.id})">✓ Complete</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+function toggleItem(id, idx){
+  const o = orders.find(x=>x.id===id);
+  o.items[idx].ready = !o.items[idx].ready;
+  save(); renderActive();
+}
+function completeOrder(id){
+  const o = orders.find(x=>x.id===id);
+  if(!o.items.every(i=>i.ready)) return;
+  o.status = "completed"; o.completedAt = Date.now();
+  save(); toast("Order #"+String(o.num).padStart(3,"0")+" completed"); renderActive();
+}
+function askCancel(id){
+  pendingCancelId = id;
+  document.getElementById("overlay").innerHTML = `<div class="sheet">
+    <div class="confirm-box">
+      <h3>Cancel order?</h3>
+      <p>This moves the order to Cancelled. It won't be deleted.</p>
+      <div class="confirm-actions">
+        <button class="keep" onclick="closeOverlay()">Keep order</button>
+        <button class="confirmcancel" onclick="doCancel()">Cancel it</button>
+      </div>
+    </div></div>`;
+  document.getElementById("overlay").classList.add("show");
+}
+function doCancel(){
+  const o = orders.find(x=>x.id===pendingCancelId);
+  o.status = "cancelled"; o.completedAt = Date.now();
+  save(); closeOverlay(); toast("Order cancelled"); renderActive();
+}
+function closeOverlay(){ document.getElementById("overlay").classList.remove("show"); }
+
+/* ---------- Completed / Cancelled ---------- */
+function renderCompleted(){
+  const list = document.getElementById("completedlist");
+  const done = todayOrders().filter(o=>o.status==="completed").sort((a,b)=>b.completedAt-a.completedAt);
+  if(done.length===0){ list.innerHTML = `<div class="empty"><span class="ic">✅</span>No completed orders yet today.</div>`; return; }
+  list.innerHTML = done.map(o=>`<div class="order-card completed">
+    <div class="head"><span class="oid">#${String(o.num).padStart(3,"0")} — ${o.customer}</span><span class="time">${fmtTime(o.completedAt)}</span></div>
+    ${o.items.map(it=>`<div class="line-item"><div class="li-name done" style="text-decoration:none;color:var(--char);">${it.name} ×${it.qty}</div></div>`).join("")}
+    <div class="order-total"><span>Total</span><span>${fmtMoney(o.total)}</span></div>
+  </div>`).join("");
+}
+function renderCancelled(){
+  const list = document.getElementById("cancelledlist");
+  const canc = todayOrders().filter(o=>o.status==="cancelled").sort((a,b)=>b.completedAt-a.completedAt);
+  if(canc.length===0){ list.innerHTML = `<div class="empty"><span class="ic">❌</span>No cancelled orders today.</div>`; return; }
+  list.innerHTML = canc.map(o=>`<div class="order-card cancelled">
+    <div class="head"><span class="oid">#${String(o.num).padStart(3,"0")} — ${o.customer}</span><span class="time">${fmtTime(o.completedAt)}</span></div>
+    <div class="order-total"><span>Total</span><span>${fmtMoney(o.total)}</span></div>
+  </div>`).join("");
+}
+
+/* ---------- Report ---------- */
+function renderReport(){
+  const t = todayOrders();
+  const done = t.filter(o=>o.status==="completed");
+  const canc = t.filter(o=>o.status==="cancelled");
+  const act = t.filter(o=>o.status==="active");
+  document.getElementById("rep-date").textContent = new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"});
+  document.getElementById("r-total").textContent = t.length;
+  document.getElementById("r-done").textContent = done.length;
+  document.getElementById("r-cancel").textContent = canc.length;
+  document.getElementById("r-active").textContent = act.length;
+  document.getElementById("r-sales").textContent = fmtMoney(done.reduce((s,o)=>s+o.total,0));
+  const counts = {};
+  done.forEach(o=>o.items.forEach(i=>{ counts[i.name] = (counts[i.name]||0)+i.qty; }));
+  const top = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  document.getElementById("r-popular").innerHTML = top.length ? top.map(([n,q],i)=>
+    `<div class="pop-item"><span><span class="rank">${i+1}.</span>${n}</span><span>${q}</span></div>`).join("")
+    : `<div class="pop-item" style="color:var(--smoke)">No completed orders yet.</div>`;
+}
+
+/* ---------- CSV / Backup ---------- */
+function downloadCSV(){
+  const t = todayOrders();
+  let rows = [["Order No","Date","Time","Customer Name","Items","Quantity","Total","Status","Completion Time"]];
+  t.forEach(o=>{
+    rows.push([
+      "#"+String(o.num).padStart(3,"0"), o.date, fmtTime(o.createdAt), o.customer,
+      o.items.map(i=>i.name).join(" | "), o.items.map(i=>i.qty).join(" | "),
+      o.total, o.status, o.completedAt?fmtTime(o.completedAt):""
+    ]);
+  });
+  const csv = "\uFEFF" + rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");
+  triggerDownload(csv, `MrFlavoraa_Orders_${todayStr()}.csv`, "text/csv");
+  toast("CSV downloading…");
+}
+function exportBackup(){
+  triggerDownload(JSON.stringify(orders,null,2), `MrFlavoraa_Backup_${todayStr()}.json`, "application/json");
+  toast("Backup downloading…");
+}
+async function triggerDownload(content, filename, mime){
+  try{
+    if(window.claude && window.claude.use){
+      const downloads = await window.claude.use("downloads");
+      if(downloads){ await downloads.save({filename, data:content}); return; }
+    }
+  }catch(e){ /* fall through to browser download */ }
+  const blob = new Blob([content], {type:mime});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 2000);
+}
+function confirmClear(){
+  document.getElementById("overlay").innerHTML = `<div class="sheet"><div class="confirm-box">
+    <h3>Clear all data?</h3><p>This permanently deletes every stored order on this device. This can't be undone.</p>
+    <div class="confirm-actions"><button class="keep" onclick="closeOverlay()">Keep data</button>
+    <button class="confirmcancel" onclick="doClear()">Clear it</button></div></div></div>`;
+  document.getElementById("overlay").classList.add("show");
+}
+function doClear(){ orders = []; save(); closeOverlay(); toast("All data cleared"); go("home"); }
+function openHistory(){
+  const dates = [...new Set(orders.map(o=>o.date))].sort().reverse();
+  const html = dates.length ? dates.map(d=>{
+    const os = orders.filter(o=>o.date===d);
+    const sales = os.filter(o=>o.status==="completed").reduce((s,o)=>s+o.total,0);
+    return `<div class="sheet-item" style="cursor:default;"><span>${d}</span><span>${os.length} orders · ${fmtMoney(sales)}</span></div>`;
+  }).join("") : `<p style="color:var(--smoke)">No history yet.</p>`;
+  document.getElementById("overlay").innerHTML = `<div class="sheet"><h3>Order history</h3>${html}</div>`;
+  document.getElementById("overlay").classList.add("show");
+}
+
+/* ---------- Toast ---------- */
+let toastT;
+function toast(msg){
+  const el = document.getElementById("toast");
+  el.textContent = msg; el.classList.add("show");
+  clearTimeout(toastT); toastT = setTimeout(()=>el.classList.remove("show"), 1800);
+}
+
+document.getElementById("overlay").addEventListener("click", e=>{ if(e.target.id==="overlay") closeOverlay(); });
+renderHome();
+</script>
+</body>
+</html>

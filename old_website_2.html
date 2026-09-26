@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Mr Flavoraa · Order Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+        body { background: #f7f3ef; min-height: 100vh; display: flex; flex-direction: column; padding-bottom: 80px; -webkit-tap-highlight-color: transparent; }
+        .app-container { max-width: 500px; margin: 0 auto; width: 100%; padding: 0 12px; flex: 1; }
+
+        /* HEADER */
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 16px 4px 8px; }
+        .brand { display: flex; align-items: center; gap: 10px; }
+        .brand img { height: 42px; width: auto; object-fit: contain; }
+        .brand-text h1 { font-size: 24px; font-weight: 800; letter-spacing: -1px; color: #2d1b0f; line-height: 1; }
+        .brand-text span { font-size: 13px; font-weight: 500; color: #a76f4b; letter-spacing: -0.2px; display: block; margin-top: 2px; }
+        .datetime { background: #fff; padding: 6px 12px; border-radius: 40px; font-size: 13px; font-weight: 600; color: #4a2e1e; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02); flex-shrink: 0; }
+        .datetime i { margin-right: 4px; color: #f59e0b; }
+
+        /* DASHBOARD CARDS */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px 0 20px; }
+        .stat-card { background: #fff; border-radius: 24px; padding: 16px 14px; box-shadow: 0 6px 14px rgba(0, 0, 0, 0.02); border: 1px solid #f0e8e0; transition: 0.2s; }
+        .stat-card .label { font-size: 13px; font-weight: 500; color: #9b7b66; display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+        .stat-card .value { font-size: 32px; font-weight: 800; color: #2d1b0f; line-height: 1.1; }
+        .stat-card .value small { font-size: 16px; font-weight: 600; color: #a76f4b; }
+
+        /* MAIN BUTTONS */
+        .action-grid { display: flex; flex-direction: column; gap: 12px; margin: 16px 0 24px; }
+        .btn-primary { background: #f59e0b; border: none; border-radius: 60px; padding: 20px 22px; font-size: 20px; font-weight: 700; color: #2d1b0f; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 12px 24px -6px rgba(245, 158, 11, 0.4); transition: 0.2s; cursor: pointer; letter-spacing: -0.3px; }
+        .btn-primary i { font-size: 26px; color: #2d1b0f; }
+        .btn-primary:active { transform: scale(0.98); background: #e88e0e; }
+        .btn-secondary { background: #fff; border: 1px solid #e8dbd0; border-radius: 60px; padding: 16px 22px; font-size: 16px; font-weight: 600; color: #3d2a1d; display: flex; align-items: center; justify-content: space-between; transition: 0.2s; cursor: pointer; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.02); }
+        .btn-secondary i { font-size: 20px; color: #f59e0b; width: 24px; text-align: center; }
+        .btn-secondary .badge { background: #fef3c7; padding: 4px 12px; border-radius: 40px; font-size: 14px; font-weight: 700; color: #b45309; }
+
+        /* BOTTOM NAV */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #ffffffec; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid #ede4db; display: flex; justify-content: space-around; align-items: center; padding: 8px 12px 14px; max-width: 500px; margin: 0 auto; border-radius: 30px 30px 0 0; box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.04); z-index: 100; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; background: transparent; border: none; font-size: 11px; font-weight: 600; color: #a48b78; cursor: pointer; padding: 6px 10px; border-radius: 40px; transition: 0.15s; flex: 1; }
+        .nav-item i { font-size: 22px; }
+        .nav-item.active { color: #f59e0b; }
+        .nav-item.active i { color: #f59e0b; }
+
+        /* SCREENS */
+        .screen { display: none; background: #f7f3ef; padding-bottom: 20px; animation: fadeSlide 0.2s ease; }
+        .screen.active { display: block; }
+        @keyframes fadeSlide { from { opacity: 0.5; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        .back-header { display: flex; align-items: center; gap: 16px; padding: 20px 4px 12px; }
+        .back-header button { background: #fff; border: none; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; color: #2d1b0f; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04); cursor: pointer; }
+        .back-header h2 { font-size: 24px; font-weight: 700; color: #2d1b0f; letter-spacing: -0.5px; }
+
+        /* INPUT */
+        .input-group { background: #fff; border-radius: 20px; padding: 6px 18px; margin: 8px 0 18px; border: 1px solid #e8dbd0; display: flex; align-items: center; }
+        .input-group i { color: #c2a48b; font-size: 18px; margin-right: 12px; }
+        .input-group input { border: none; padding: 16px 0; font-size: 17px; font-weight: 500; width: 100%; outline: none; background: transparent; color: #2d1b0f; }
+        .input-group input::placeholder { color: #cdb6a6; font-weight: 400; }
+
+        /* CATEGORY CHIPS */
+        .category-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 12px; scrollbar-width: none; }
+        .category-scroll::-webkit-scrollbar { display: none; }
+        .cat-chip { background: #fff; border: 1px solid #e8dbd0; border-radius: 40px; padding: 10px 20px; white-space: nowrap; font-weight: 600; font-size: 14px; color: #4f3627; cursor: pointer; transition: 0.1s; }
+        .cat-chip.active { background: #f59e0b; border-color: #f59e0b; color: #2d1b0f; }
+
+        /* MENU ITEMS */
+        .menu-grid { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+        .menu-item { background: #fff; border-radius: 24px; padding: 16px 18px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #f0e8e0; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.01); }
+        .menu-item .info h4 { font-size: 17px; font-weight: 700; color: #2d1b0f; letter-spacing: -0.2px; }
+        .menu-item .info .price { font-size: 15px; font-weight: 600; color: #b45309; margin-top: 2px; }
+        .menu-item .info .variants { font-size: 13px; font-weight: 500; color: #a48b78; margin-top: 2px; }
+        .qty-control { display: flex; align-items: center; gap: 14px; background: #faf6f2; padding: 6px 10px; border-radius: 60px; }
+        .qty-control button { width: 36px; height: 36px; border-radius: 50%; border: none; background: #fff; font-size: 22px; font-weight: 600; color: #2d1b0f; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04); transition: 0.1s; }
+        .qty-control button:active { background: #f0e8e0; transform: scale(0.94); }
+        .qty-control .count { font-size: 18px; font-weight: 700; min-width: 24px; text-align: center; color: #2d1b0f; }
+
+        /* VARIANT SELECTOR */
+        .variant-selector { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+        .variant-btn { background: #f5ede6; border: 1px solid #e0cfc0; border-radius: 40px; padding: 4px 14px; font-size: 13px; font-weight: 600; color: #4f3627; cursor: pointer; transition: 0.1s; }
+        .variant-btn.active { background: #f59e0b; border-color: #f59e0b; color: #2d1b0f; }
+        .variant-btn:active { transform: scale(0.95); }
+
+        /* CURRENT ORDER */
+        .current-order-panel { background: #fff; border-radius: 28px; padding: 20px 18px; margin: 24px 0 10px; border: 1px solid #f0e8e0; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.02); }
+        .current-order-panel h3 { font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; color: #a48b78; margin-bottom: 14px; }
+        .order-line { display: flex; justify-content: space-between; padding: 8px 0; font-size: 16px; font-weight: 500; color: #2d1b0f; border-bottom: 1px dashed #f0e8e0; }
+        .order-line:last-of-type { border-bottom: none; }
+        .order-line .item-name { font-weight: 500; }
+        .order-line .item-qty { color: #a76f4b; font-weight: 600; }
+        .order-line .item-price { font-weight: 600; color: #2d1b0f; }
+        .order-total { display: flex; justify-content: space-between; margin: 16px 0 18px; font-size: 22px; font-weight: 800; color: #2d1b0f; padding-top: 8px; border-top: 2px solid #f0e8e0; }
+        .btn-save { background: #f59e0b; border: none; border-radius: 60px; padding: 18px; font-size: 18px; font-weight: 700; color: #2d1b0f; width: 100%; box-shadow: 0 10px 20px -6px rgba(245, 158, 11, 0.5); cursor: pointer; transition: 0.15s; }
+        .btn-save:active { transform: scale(0.98); background: #e88e0e; }
+
+        /* ORDER CARDS */
+        .order-card { background: #fff; border-radius: 28px; padding: 18px 18px 16px; margin-bottom: 14px; border: 1px solid #f0e8e0; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.02); }
+        .order-card .order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .order-card .order-header h3 { font-size: 18px; font-weight: 700; color: #2d1b0f; }
+        .order-card .order-header .order-num { background: #fef3c7; padding: 4px 12px; border-radius: 40px; font-size: 13px; font-weight: 700; color: #b45309; }
+        .order-card .order-time { font-size: 13px; color: #a48b78; font-weight: 500; margin-bottom: 14px; }
+        .item-checklist { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+        .check-item { display: flex; align-items: center; gap: 12px; font-size: 16px; font-weight: 500; color: #2d1b0f; padding: 4px 0; cursor: pointer; transition: 0.1s; }
+        .check-item .checkbox { width: 26px; height: 26px; border-radius: 10px; border: 2px solid #e0cfc0; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #fff; transition: 0.1s; flex-shrink: 0; }
+        .check-item.checked .checkbox { background: #f59e0b; border-color: #f59e0b; color: #2d1b0f; }
+        .check-item.checked .item-text { text-decoration: line-through; color: #b7a394; }
+        .check-item .item-text { flex: 1; }
+        .check-item .item-qty-badge { background: #f5ede6; padding: 2px 10px; border-radius: 40px; font-size: 14px; font-weight: 600; color: #4f3627; }
+        .order-actions { display: flex; gap: 10px; margin-top: 8px; }
+        .order-actions button { flex: 1; border: none; border-radius: 60px; padding: 14px; font-weight: 700; font-size: 15px; cursor: pointer; transition: 0.1s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .btn-cancel { background: #fee2e2; color: #b91c1c; }
+        .btn-complete { background: #dcfce7; color: #166534; }
+        .btn-cancel:active { background: #fecaca; }
+        .btn-complete:active { background: #bbf7d0; }
+        .all-ready-badge { background: #fef3c7; padding: 10px 16px; border-radius: 60px; text-align: center; font-weight: 700; font-size: 15px; color: #b45309; margin-bottom: 12px; }
+
+        /* COMPACT ORDERS */
+        .compact-order { background: #fff; border-radius: 20px; padding: 16px 18px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #f0e8e0; }
+        .compact-order .left h4 { font-size: 16px; font-weight: 700; color: #2d1b0f; }
+        .compact-order .left span { font-size: 13px; color: #a48b78; }
+        .compact-order .right { font-weight: 700; color: #2d1b0f; }
+
+        /* REPORT */
+        .report-table { background: #fff; border-radius: 28px; padding: 8px 4px; margin: 16px 0; border: 1px solid #f0e8e0; }
+        .report-row { display: flex; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid #f7f0ea; font-size: 16px; font-weight: 500; }
+        .report-row:last-child { border-bottom: none; }
+        .report-row .label { color: #7f6654; }
+        .report-row .value { font-weight: 700; color: #2d1b0f; }
+        .popular-item { display: flex; justify-content: space-between; padding: 10px 0; font-size: 15px; font-weight: 500; border-bottom: 1px dashed #f0e8e0; }
+
+        /* TOAST */
+        .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(20px); background: #2d1b0f; color: #fff; padding: 12px 24px; border-radius: 60px; font-weight: 600; font-size: 14px; opacity: 0; transition: 0.25s; pointer-events: none; z-index: 200; box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2); white-space: nowrap; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* EMPTY STATES */
+        .empty-state { text-align: center; padding: 40px 20px; color: #b7a394; font-weight: 500; }
+        .empty-state i { font-size: 48px; color: #e8dbd0; margin-bottom: 12px; display: block; }
+
+        /* DATE SELECTOR */
+        .date-selector { display: flex; align-items: center; gap: 12px; background: #fff; border-radius: 60px; padding: 8px 16px; border: 1px solid #e8dbd0; margin: 8px 0 16px; }
+        .date-selector i { color: #f59e0b; font-size: 18px; }
+        .date-selector input { border: none; font-size: 16px; font-weight: 600; color: #2d1b0f; background: transparent; outline: none; width: 100%; }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <!-- ========== MAIN DASHBOARD ========== -->
+    <div id="screen-dashboard" class="screen active">
+        <div class="app-container">
+            <div class="header">
+                <div class="brand">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 120'%3E%3Ctext x='10' y='80' font-family='Arial Black, sans-serif' font-size='72' font-weight='900' fill='%237a1a1a' stroke='%23000' stroke-width='2'%3EMr%3C/text%3E%3Ctext x='130' y='80' font-family='Arial Black, sans-serif' font-size='72' font-weight='900' fill='%23f5c518' stroke='%23000' stroke-width='2'%3EFlavoraa%3C/text%3E%3C/svg%3E" alt="Mr Flavoraa Logo">
+                    <div class="brand-text">
+                        <h1>MR FLAVORAA</h1>
+                        <span>Order Management</span>
+                    </div>
+                </div>
+                <div class="datetime" id="liveDateTime">
+                    <i class="fas fa-calendar-alt"></i> <span id="dateDisplay">26 Sep</span>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="label"><i class="fas fa-shopping-bag" style="color:#f59e0b;"></i> Today's Orders</div>
+                    <div class="value" id="statTotalOrders">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label"><i class="fas fa-rupee-sign" style="color:#f59e0b;"></i> Today's Sales</div>
+                    <div class="value" id="statSales">₹0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label"><i class="fas fa-clock" style="color:#f59e0b;"></i> Active Orders</div>
+                    <div class="value" id="statActive">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label"><i class="fas fa-check-circle" style="color:#f59e0b;"></i> Completed</div>
+                    <div class="value" id="statCompleted">0</div>
+                </div>
+            </div>
+
+            <div class="action-grid">
+                <button class="btn-primary" onclick="showNewOrderScreen()">
+                    <span>➕ NEW ORDER</span>
+                    <i class="fas fa-plus-circle"></i>
+                </button>
+                <button class="btn-secondary" onclick="showScreen('active')">
+                    <i class="fas fa-clock"></i>
+                    <span>Active Orders</span>
+                    <span class="badge" id="badgeActive">0</span>
+                </button>
+                <button class="btn-secondary" onclick="showScreen('completed')">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Completed Orders</span>
+                    <span class="badge" id="badgeCompleted">0</span>
+                </button>
+                <button class="btn-secondary" onclick="showScreen('cancelled')">
+                    <i class="fas fa-ban"></i>
+                    <span>Cancelled Orders</span>
+                    <span class="badge" id="badgeCancelled">0</span>
+                </button>
+                <button class="btn-secondary" onclick="showScreen('report')">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Daily Report</span>
+                </button>
+                <button class="btn-secondary" onclick="downloadCSV()">
+                    <i class="fas fa-download"></i>
+                    <span>Download Data (CSV)</span>
+                </button>
+                <button class="btn-secondary" onclick="exportBackup()">
+                    <i class="fas fa-file-export"></i>
+                    <span>Export Backup (JSON)</span>
+                </button>
+                <button class="btn-secondary" onclick="triggerImport()">
+                    <i class="fas fa-file-import"></i>
+                    <span>Import Backup</span>
+                </button>
+                <input type="file" id="importFileInput" accept=".json" style="display: none;">
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== NEW ORDER ========== -->
+    <div id="screen-new-order" class="screen">
+        <div class="app-container">
+            <div class="back-header">
+                <button onclick="showScreen('dashboard')"><i class="fas fa-arrow-left"></i></button>
+                <h2>New Order</h2>
+            </div>
+
+            <div class="input-group">
+                <i class="fas fa-user"></i>
+                <input type="text" id="customerNameInput" placeholder="Customer name" autocomplete="off">
+            </div>
+
+            <div class="category-scroll" id="categoryChips"></div>
+            <div class="menu-grid" id="menuGrid"></div>
+
+            <div class="current-order-panel" id="currentOrderPanel">
+                <h3>CURRENT ORDER</h3>
+                <div id="currentOrderLines">
+                    <div class="empty-state" style="padding:10px 0; font-size:14px;">No items added yet</div>
+                </div>
+                <div class="order-total">
+                    <span>TOTAL</span>
+                    <span id="currentOrderTotal">₹0</span>
+                </div>
+                <button class="btn-save" onclick="saveNewOrder()">SAVE ORDER</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== ACTIVE ORDERS ========== -->
+    <div id="screen-active" class="screen">
+        <div class="app-container">
+            <div class="back-header">
+                <button onclick="showScreen('dashboard')"><i class="fas fa-arrow-left"></i></button>
+                <h2>Active Orders</h2>
+            </div>
+            <div id="activeOrdersList"></div>
+        </div>
+    </div>
+
+    <!-- ========== COMPLETED ORDERS ========== -->
+    <div id="screen-completed" class="screen">
+        <div class="app-container">
+            <div class="back-header">
+                <button onclick="showScreen('dashboard')"><i class="fas fa-arrow-left"></i></button>
+                <h2>Completed Orders</h2>
+            </div>
+            <div id="completedOrdersList"></div>
+        </div>
+    </div>
+
+    <!-- ========== CANCELLED ORDERS ========== -->
+    <div id="screen-cancelled" class="screen">
+        <div class="app-container">
+            <div class="back-header">
+                <button onclick="showScreen('dashboard')"><i class="fas fa-arrow-left"></i></button>
+                <h2>Cancelled Orders</h2>
+            </div>
+            <div id="cancelledOrdersList"></div>
+        </div>
+    </div>
+
+    <!-- ========== DAILY REPORT ========== -->
+    <div id="screen-report" class="screen">
+        <div class="app-container">
+            <div class="back-header">
+                <button onclick="showScreen('dashboard')"><i class="fas fa-arrow-left"></i></button>
+                <h2>Daily Report</h2>
+            </div>
+
+            <div class="date-selector">
+                <i class="fas fa-calendar-day"></i>
+                <input type="date" id="reportDatePicker" onchange="renderReportForDate()">
+            </div>
+
+            <div class="report-table" id="reportSummary"></div>
+            <div style="background:#fff; border-radius:28px; padding:18px; border:1px solid #f0e8e0; margin-top:12px;">
+                <h3 style="font-size:15px; text-transform:uppercase; color:#a48b78; margin-bottom:12px;">Most Ordered Items</h3>
+                <div id="popularItemsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== BOTTOM NAV ========== -->
+    <div class="bottom-nav">
+        <button class="nav-item active" data-nav="dashboard" onclick="showScreen('dashboard')">
+            <i class="fas fa-home"></i><span>Home</span>
+        </button>
+        <button class="nav-item" data-nav="new-order" onclick="showNewOrderScreen()">
+            <i class="fas fa-plus-circle"></i><span>New</span>
+        </button>
+        <button class="nav-item" data-nav="active" onclick="showScreen('active')">
+            <i class="fas fa-clock"></i><span>Active</span>
+        </button>
+        <button class="nav-item" data-nav="completed" onclick="showScreen('completed')">
+            <i class="fas fa-check-circle"></i><span>Done</span>
+        </button>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // ---------- STORAGE KEYS ----------
+        const STORAGE_KEY = 'mr_flavoraa_orders_v2';
+        const MENU_KEY = 'mr_flavoraa_menu_v3';
+
+        // ---------- UPDATED MENU (as per latest spec) ----------
+        const DEFAULT_MENU = [
+            // 🍟 GOLDEN BATONS
+            { id: 'fries_classic_bowl', category: 'Golden Batons', name: 'Classic Fries Bowl', price: 70 },
+            { id: 'fries_masala_bowl', category: 'Golden Batons', name: 'Masala Fries Bowl', price: 80 },
+            { id: 'fries_peri_bowl', category: 'Golden Batons', name: 'Peri-Peri Fries Bowl', price: 90 },
+            { id: 'fries_cheesy_bowl', category: 'Golden Batons', name: 'Cheesy Fries Bowl', price: 100 },
+            { id: 'fries_peri_veg_cheese_bowl', category: 'Golden Batons', name: 'Peri-Peri Veg and Cheese Fries Bowl', price: 140 },
+            { id: 'wedges_classic', category: 'Golden Batons', name: 'Classic Potato Wedges', price: 90 },
+            { id: 'wedges_masala', category: 'Golden Batons', name: 'Masala Potato Wedges', price: 100 },
+            { id: 'wedges_peri', category: 'Golden Batons', name: 'Peri-Peri Potato Wedges', price: 110 },
+
+            // 🥪 BUN SAMOSA
+            { id: 'bun_samosa_classic', category: 'Bun Samosa', name: 'Classic Bun Samosa', price: 45 },
+            { id: 'bun_samosa_peri', category: 'Bun Samosa', name: 'Peri Peri Bun Samosa', price: 55 },
+            { id: 'bun_samosa_cheese', category: 'Bun Samosa', name: 'Cheese Bun Samosa', price: 75 },
+            { id: 'bun_samosa_cheese_mayo', category: 'Bun Samosa', name: 'Cheese Mayo Bun Samosa', price: 85 },
+            { id: 'bun_samosa_peri_cheese', category: 'Bun Samosa', name: 'Peri Peri Cheese Bun Samosa', price: 95 },
+            { id: 'bun_samosa_classic_cheese', category: 'Bun Samosa', name: 'Classic Cheese Bun Samosa', price: 85 },
+
+            // 🍕 ITALIAN
+            { id: 'pizza_classic_veg', category: 'Italian', name: 'Classic Veg Pizza', price: 99 },
+            { id: 'pizza_margarita', category: 'Italian', name: 'Margarita Pizza', price: 110 },
+            { id: 'pizza_veg_exotic', category: 'Italian', name: 'Veg Exotic Pizza', price: 130 },
+            { id: 'pizza_cheese_corn', category: 'Italian', name: 'Cheese Corn Pizza', price: 110 },
+            { id: 'garlic_bread_cheese', category: 'Italian', name: 'Cheese Garlic Bread', price: 69 },
+            { id: 'garlic_bread_exotic', category: 'Italian', name: 'Exotic Veg Garlic Bread', price: 89 },
+            { id: 'pizza_broccoli', category: 'Italian', name: 'Cheese Broccoli Pizza', price: 130 },
+
+            // 🍞 TOASTIES
+            { id: 'toast_cheese', category: 'Toasties', name: 'Cheese Toast', price: 70 },
+            { id: 'toast_cheese_chilly', category: 'Toasties', name: 'Cheese Chilly Toast', price: 80 },
+            { id: 'toast_cheese_corn', category: 'Toasties', name: 'Cheese Corn Toast', price: 90 },
+            { id: 'toast_cheesy_broccoli', category: 'Toasties', name: 'Cheesy Broccoli Burst', price: 130 },
+            { id: 'toast_exotic_veg', category: 'Toasties', name: 'Exotic Veg Toast', price: 150 },
+
+            // 🥤 BEVERAGES
+            { id: 'water_bottle', category: 'Beverages', name: 'Water Bottle', price: 0, note: 'As per Bottle MRP' },
+            { id: 'buttermilk', category: 'Beverages', name: 'Buttermilk', price: 20 },
+            { id: 'coldrink_bottle', category: 'Beverages', name: 'Coldrink – Bottle', price: 20 },
+            { id: 'coldrink_can', category: 'Beverages', name: 'Coldrink – Can', price: 70 },
+
+            // 🍨 DESSERTS
+            { id: 'ice_cream', category: 'Desserts', name: 'Ice-Cream', price: 59 },
+            { id: 'gulab_jamun_hot', category: 'Desserts', name: 'Hot Gulab Jamun', price: 49 },
+            { id: 'gulab_jamun_icecream', category: 'Desserts', name: 'Hot Gulab Jamun with Ice-Cream', price: 79 },
+
+            // 🥞 DOSAS
+            { id: 'dosa_plain', category: 'Dosas', name: 'Plain Dosa', variants: { 'Oil': 70, 'Butter': 100 } },
+            { id: 'dosa_masala', category: 'Dosas', name: 'Masala Dosa', variants: { 'Oil': 80, 'Butter': 110 } },
+            { id: 'dosa_masala_cheese', category: 'Dosas', name: 'Masala Cheese Dosa', variants: { 'Oil': 110, 'Butter': 140 } },
+            { id: 'dosa_mysore', category: 'Dosas', name: 'Mysore Masala Dosa', variants: { 'Oil': 90, 'Butter': 120 } },
+            { id: 'dosa_plain_garlic', category: 'Dosas', name: 'Plain Garlic Dosa', variants: { 'Oil': 80, 'Butter': 110 } },
+            { id: 'dosa_cheese_garlic', category: 'Dosas', name: 'Cheese Garlic Dosa', variants: { 'Oil': 100, 'Butter': 130 } },
+            { id: 'dosa_cheese', category: 'Dosas', name: 'Cheese Dosa', variants: { 'Oil': 110, 'Butter': 140 } },
+            { id: 'dosa_cheese_chilli', category: 'Dosas', name: 'Cheese Chilli Dosa', variants: { 'Oil': 110, 'Butter': 140 } },
+            { id: 'dosa_cheese_tomato', category: 'Dosas', name: 'Cheese Tomato Dosa', variants: { 'Oil': 110, 'Butter': 140 } },
+            { id: 'dosa_cheese_onion_tomato', category: 'Dosas', name: 'Cheese Onion Tomato Dosa', variants: { 'Oil': 130, 'Butter': 160 } },
+            { id: 'dosa_masala_fry', category: 'Dosas', name: 'Masala Fry', variants: { 'Oil': 130, 'Butter': 160 } },
+            { id: 'dosa_pizza', category: 'Dosas', name: 'Pizza Dosa', variants: { 'Oil': 140, 'Butter': 170 } },
+
+            // 🧇 WAFFLES
+            { id: 'waffle_classic_chocolate', category: 'Waffles', name: 'Classic Chocolate Waffle', variants: { 'Half Moon': 100, 'Full Moon': 200 } },
+            { id: 'waffle_white_chocolate', category: 'Waffles', name: 'White Chocolate Waffle', variants: { 'Half Moon': 100, 'Full Moon': 200 } },
+            { id: 'waffle_oreo', category: 'Waffles', name: 'Oreo Crunch Waffle', variants: { 'Half Moon': 120, 'Full Moon': 220 } },
+            { id: 'waffle_kitkat', category: 'Waffles', name: 'KitKat Chocolate Waffle', variants: { 'Half Moon': 120, 'Full Moon': 220 } },
+            { id: 'waffle_nutella', category: 'Waffles', name: 'Nutella Waffle', variants: { 'Half Moon': 140, 'Full Moon': 240 } },
+            { id: 'waffle_chocolate_loaded', category: 'Waffles', name: 'Chocolate Loaded Waffle', variants: { 'Half Moon': 140, 'Full Moon': 240 } },
+            { id: 'waffle_redvelvet', category: 'Waffles', name: 'Red Velvet Waffle', variants: { 'Half Moon': 165, 'Full Moon': 265 } },
+        ];
+
+        if (!localStorage.getItem(MENU_KEY)) {
+            localStorage.setItem(MENU_KEY, JSON.stringify(DEFAULT_MENU));
+        }
+
+        function getOrders() {
+            const data = localStorage.getItem(STORAGE_KEY);
+            return data ? JSON.parse(data) : [];
+        }
+
+        function saveOrders(orders) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
+        }
+
+        function getMenu() {
+            const data = localStorage.getItem(MENU_KEY);
+            return data ? JSON.parse(data) : DEFAULT_MENU;
+        }
+
+        function getCategories() {
+            const menu = getMenu();
+            return [...new Set(menu.map(item => item.category))];
+        }
+
+        // ---------- UTILS ----------
+        function todayStr() {
+            const d = new Date();
+            return d.toISOString().slice(0, 10);
+        }
+
+        function formatTime(date = new Date()) {
+            return date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            clearTimeout(t._timer);
+            t._timer = setTimeout(() => t.classList.remove('show'), 2200);
+        }
+
+        // ---------- NAVIGATION ----------
+        let currentScreen = 'dashboard';
+
+        function showScreen(name) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('screen-' + name).classList.add('active');
+            currentScreen = name;
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            const navMap = { dashboard: 'dashboard', 'new-order': 'new-order', active: 'active', completed: 'completed', cancelled: null, report: null };
+            const navKey = navMap[name];
+            if (navKey) {
+                document.querySelector(`.nav-item[data-nav="${navKey}"]`)?.classList.add('active');
+            }
+            if (name === 'dashboard') renderDashboard();
+            if (name === 'active') renderActiveOrders();
+            if (name === 'completed') renderCompletedOrders();
+            if (name === 'cancelled') renderCancelledOrders();
+            if (name === 'report') renderReportForDate();
+            if (name === 'new-order') {
+                newOrderItems = {};
+                document.getElementById('customerNameInput').value = '';
+                renderMenuForCategory(activeCategory);
+                renderCurrentOrderPanel();
+            }
+        }
+
+        // ---------- DASHBOARD ----------
+        function renderDashboard() {
+            const orders = getOrders();
+            const today = todayStr();
+            const todayOrders = orders.filter(o => o.date === today);
+            const totalOrders = todayOrders.length;
+            const completed = todayOrders.filter(o => o.status === 'completed').length;
+            const cancelled = todayOrders.filter(o => o.status === 'cancelled').length;
+            const active = todayOrders.filter(o => o.status === 'active').length;
+
+            const totalSales = todayOrders
+                .filter(o => o.status === 'completed')
+                .reduce((sum, o) => sum + o.total, 0);
+
+            document.getElementById('statTotalOrders').textContent = totalOrders;
+            document.getElementById('statSales').innerHTML = `₹${totalSales.toLocaleString('en-IN')}`;
+            document.getElementById('statActive').textContent = active;
+            document.getElementById('statCompleted').textContent = completed;
+
+            document.getElementById('badgeActive').textContent = active;
+            document.getElementById('badgeCompleted').textContent = completed;
+            document.getElementById('badgeCancelled').textContent = cancelled;
+
+            const now = new Date();
+            document.getElementById('dateDisplay').textContent = now.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+        }
+
+        // ---------- NEW ORDER ----------
+        let activeCategory = 'Dosas';
+        let newOrderItems = {};
+
+        function showNewOrderScreen() {
+            activeCategory = getCategories()[0] || 'Dosas';
+            newOrderItems = {};
+            showScreen('new-order');
+            renderCategories();
+            renderMenuForCategory(activeCategory);
+            renderCurrentOrderPanel();
+        }
+
+        function renderCategories() {
+            const cats = getCategories();
+            const container = document.getElementById('categoryChips');
+            container.innerHTML = cats.map(cat =>
+                `<button class="cat-chip ${cat === activeCategory ? 'active' : ''}" onclick="selectCategory('${cat}')">${cat}</button>`
+            ).join('');
+        }
+
+        function selectCategory(cat) {
+            activeCategory = cat;
+            renderCategories();
+            renderMenuForCategory(cat);
+        }
+
+        function renderMenuForCategory(cat) {
+            const menu = getMenu().filter(item => item.category === cat);
+            const container = document.getElementById('menuGrid');
+            if (menu.length === 0) {
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-utensils"></i> No items in this category</div>';
+                return;
+            }
+            container.innerHTML = menu.map(item => {
+                const hasVariants = item.variants && Object.keys(item.variants).length > 0;
+                let variantHtml = '';
+                let displayPrice = '';
+                if (hasVariants) {
+                    const variantKeys = Object.keys(item.variants);
+                    const selectedVariant = newOrderItems[item.id + '|' + variantKeys[0]] ? variantKeys[0] : (newOrderItems[item.id + '|' + variantKeys[1]] ? variantKeys[1] : variantKeys[0]);
+                    variantHtml = `<div class="variant-selector" style="margin-top:6px;">
+                        ${variantKeys.map(v => `<button class="variant-btn ${selectedVariant === v ? 'active' : ''}" onclick="selectVariant('${item.id}', '${v}')">${v} ₹${item.variants[v]}</button>`).join('')}
+                    </div>`;
+                    const activeKey = item.id + '|' + selectedVariant;
+                    const qty = newOrderItems[activeKey]?.qty || 0;
+                    displayPrice = `<div class="price">₹${item.variants[selectedVariant]}</div>`;
+                    return `
+                        <div class="menu-item" style="flex-direction:column; align-items:stretch;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <div class="info">
+                                    <h4>${item.name}</h4>
+                                    ${displayPrice}
+                                </div>
+                                <div class="qty-control">
+                                    <button onclick="updateItemQty('${item.id}', '${selectedVariant}', -1)">−</button>
+                                    <span class="count" id="qty-${item.id}-${selectedVariant}">${qty}</span>
+                                    <button onclick="updateItemQty('${item.id}', '${selectedVariant}', 1)">+</button>
+                                </div>
+                            </div>
+                            ${variantHtml}
+                        </div>
+                    `;
+                } else {
+                    const qty = newOrderItems[item.id]?.qty || 0;
+                    const priceDisplay = item.note ? item.note : `₹${item.price}`;
+                    return `
+                        <div class="menu-item">
+                            <div class="info">
+                                <h4>${item.name}</h4>
+                                <div class="price">${priceDisplay}</div>
+                            </div>
+                            <div class="qty-control">
+                                <button onclick="updateItemQty('${item.id}', null, -1)">−</button>
+                                <span class="count" id="qty-${item.id}">${qty}</span>
+                                <button onclick="updateItemQty('${item.id}', null, 1)">+</button>
+                            </div>
+                        </div>
+                    `;
+                }
+            }).join('');
+        }
+
+        function selectVariant(itemId, variant) {
+            renderMenuForCategory(activeCategory);
+        }
+
+        function updateItemQty(itemId, variant, delta) {
+            const menu = getMenu();
+            const item = menu.find(i => i.id === itemId);
+            if (!item) return;
+
+            let key, name, price;
+            if (item.variants && variant) {
+                key = itemId + '|' + variant;
+                name = item.name + ' (' + variant + ')';
+                price = item.variants[variant];
+            } else {
+                key = itemId;
+                name = item.name;
+                price = item.price;
+            }
+
+            let qty = (newOrderItems[key]?.qty || 0) + delta;
+            if (qty < 0) qty = 0;
+
+            if (qty === 0) {
+                delete newOrderItems[key];
+            } else {
+                newOrderItems[key] = { id: itemId, name: name, price: price, qty: qty, variant: variant || null };
+            }
+
+            const countId = variant ? `qty-${itemId}-${variant}` : `qty-${itemId}`;
+            const countEl = document.getElementById(countId);
+            if (countEl) countEl.textContent = qty;
+
+            renderCurrentOrderPanel();
+            renderMenuForCategory(activeCategory);
+        }
+
+        function renderCurrentOrderPanel() {
+            const linesContainer = document.getElementById('currentOrderLines');
+            const items = Object.values(newOrderItems);
+
+            if (items.length === 0) {
+                linesContainer.innerHTML = '<div class="empty-state" style="padding:10px 0; font-size:14px;">No items added yet</div>';
+                document.getElementById('currentOrderTotal').textContent = '₹0';
+                return;
+            }
+
+            const total = items.reduce((sum, i) => sum + (i.price * i.qty), 0);
+
+            linesContainer.innerHTML = items.map(i => `
+                <div class="order-line">
+                    <span class="item-name">${i.name}</span>
+                    <span class="item-qty">×${i.qty}</span>
+                    <span class="item-price">₹${i.price * i.qty}</span>
+                </div>
+            `).join('');
+
+            document.getElementById('currentOrderTotal').textContent = `₹${total}`;
+        }
+
+        function saveNewOrder() {
+            const name = document.getElementById('customerNameInput').value.trim();
+            if (!name) {
+                showToast('Please enter customer name');
+                return;
+            }
+            if (Object.keys(newOrderItems).length === 0) {
+                showToast('Add at least one item');
+                return;
+            }
+
+            const orders = getOrders();
+            const today = todayStr();
+
+            const todayOrders = orders.filter(o => o.date === today);
+            const maxNum = todayOrders.reduce((max, o) => Math.max(max, o.orderNo), 0);
+            const orderNo = maxNum + 1;
+
+            const items = Object.values(newOrderItems).map(i => ({
+                id: i.id,
+                name: i.name,
+                price: i.price,
+                qty: i.qty,
+                variant: i.variant,
+                ready: false
+            }));
+
+            const total = items.reduce((sum, i) => sum + i.price * i.qty, 0);
+
+            const newOrder = {
+                id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+                orderNo: orderNo,
+                customer: name,
+                date: today,
+                time: new Date().toISOString(),
+                items: items,
+                total: total,
+                status: 'active',
+                completedTime: null,
+            };
+
+            orders.push(newOrder);
+            saveOrders(orders);
+
+            showToast(`Order #${String(orderNo).padStart(3, '0')} saved!`);
+            showScreen('dashboard');
+        }
+
+        // ---------- ACTIVE ORDERS ----------
+        function renderActiveOrders() {
+            const orders = getOrders();
+            const active = orders.filter(o => o.status === 'active');
+            const container = document.getElementById('activeOrdersList');
+
+            if (active.length === 0) {
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-mug-hot"></i> No active orders</div>';
+                return;
+            }
+
+            container.innerHTML = active.map(order => {
+                const allReady = order.items.every(i => i.ready);
+                const itemsHtml = order.items.map((item, idx) => {
+                    const checked = item.ready ? 'checked' : '';
+                    return `
+                        <div class="check-item ${checked}" onclick="toggleItemReady('${order.id}', ${idx})">
+                            <div class="checkbox"><i class="fas fa-check"></i></div>
+                            <span class="item-text">${item.name} ${item.variant ? `(${item.variant})` : ''}</span>
+                            <span class="item-qty-badge">×${item.qty}</span>
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="order-card">
+                        <div class="order-header">
+                            <h3>#${String(order.orderNo).padStart(3, '0')} — ${order.customer}</h3>
+                            <span class="order-num">${formatTime(new Date(order.time))}</span>
+                        </div>
+                        <div class="item-checklist">
+                            ${itemsHtml}
+                        </div>
+                        ${allReady ? '<div class="all-ready-badge"><i class="fas fa-check-circle"></i> ALL ITEMS READY</div>' : ''}
+                        <div class="order-actions">
+                            <button class="btn-cancel" onclick="cancelOrder('${order.id}')"><i class="fas fa-ban"></i> CANCEL</button>
+                            <button class="btn-complete" onclick="completeOrder('${order.id}')" ${!allReady ? 'disabled style="opacity:0.5;"' : ''}><i class="fas fa-check"></i> COMPLETE</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleItemReady(orderId, itemIndex) {
+            const orders = getOrders();
+            const order = orders.find(o => o.id === orderId);
+            if (!order) return;
+            order.items[itemIndex].ready = !order.items[itemIndex].ready;
+            saveOrders(orders);
+            renderActiveOrders();
+        }
+
+        function completeOrder(orderId) {
+            const orders = getOrders();
+            const order = orders.find(o => o.id === orderId);
+            if (!order) return;
+            if (!order.items.every(i => i.ready)) {
+                showToast('All items must be ready first');
+                return;
+            }
+            order.status = 'completed';
+            order.completedTime = new Date().toISOString();
+            saveOrders(orders);
+            showToast(`Order #${String(order.orderNo).padStart(3, '0')} completed`);
+            renderActiveOrders();
+            renderDashboard();
+        }
+
+        function cancelOrder(orderId) {
+            if (!confirm('Are you sure you want to cancel this order?')) return;
+            const orders = getOrders();
+            const order = orders.find(o => o.id === orderId);
+            if (!order) return;
+            order.status = 'cancelled';
+            order.completedTime = new Date().toISOString();
+            saveOrders(orders);
+            showToast(`Order #${String(order.orderNo).padStart(3, '0')} cancelled`);
+            renderActiveOrders();
+            renderDashboard();
+        }
+
+        // ---------- COMPLETED ORDERS ----------
+        function renderCompletedOrders() {
+            const orders = getOrders();
+            const completed = orders.filter(o => o.status === 'completed').sort((a, b) => new Date(b.time) - new Date(a.time));
+            const container = document.getElementById('completedOrdersList');
+
+            if (completed.length === 0) {
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-check-circle"></i> No completed orders</div>';
+                return;
+            }
+
+            container.innerHTML = completed.map(order => `
+                <div class="compact-order">
+                    <div class="left">
+                        <h4>#${String(order.orderNo).padStart(3, '0')}  ${order.customer}</h4>
+                        <span>${formatTime(new Date(order.time))} · ${order.items.length} items</span>
+                    </div>
+                    <div class="right">₹${order.total}</div>
+                </div>
+            `).join('');
+        }
+
+        // ---------- CANCELLED ORDERS ----------
+        function renderCancelledOrders() {
+            const orders = getOrders();
+            const cancelled = orders.filter(o => o.status === 'cancelled').sort((a, b) => new Date(b.time) - new Date(a.time));
+            const container = document.getElementById('cancelledOrdersList');
+
+            if (cancelled.length === 0) {
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-ban"></i> No cancelled orders</div>';
+                return;
+            }
+
+            container.innerHTML = cancelled.map(order => `
+                <div class="compact-order">
+                    <div class="left">
+                        <h4>#${String(order.orderNo).padStart(3, '0')}  ${order.customer}</h4>
+                        <span>${formatTime(new Date(order.time))}</span>
+                    </div>
+                    <div class="right">₹${order.total}</div>
+                </div>
+            `).join('');
+        }
+
+        // ---------- REPORT ----------
+        function renderReportForDate() {
+            const picker = document.getElementById('reportDatePicker');
+            const date = picker.value || todayStr();
+            const orders = getOrders().filter(o => o.date === date);
+
+            const totalOrders = orders.length;
+            const completed = orders.filter(o => o.status === 'completed');
+            const cancelled = orders.filter(o => o.status === 'cancelled');
+            const active = orders.filter(o => o.status === 'active');
+            const totalSales = completed.reduce((sum, o) => sum + o.total, 0);
+
+            document.getElementById('reportSummary').innerHTML = `
+                <div class="report-row"><span class="label">Total Orders</span><span class="value">${totalOrders}</span></div>
+                <div class="report-row"><span class="label">Completed Orders</span><span class="value">${completed.length}</span></div>
+                <div class="report-row"><span class="label">Cancelled Orders</span><span class="value">${cancelled.length}</span></div>
+                <div class="report-row"><span class="label">Active Orders</span><span class="value">${active.length}</span></div>
+                <div class="report-row"><span class="label">Total Sales</span><span class="value">₹${totalSales.toLocaleString('en-IN')}</span></div>
+            `;
+
+            const itemCount = {};
+            orders.forEach(order => {
+                if (order.status === 'completed' || order.status === 'active') {
+                    order.items.forEach(item => {
+                        const key = item.name + (item.variant ? ' (' + item.variant + ')' : '');
+                        itemCount[key] = (itemCount[key] || 0) + item.qty;
+                    });
+                }
+            });
+            const sorted = Object.entries(itemCount).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            const popContainer = document.getElementById('popularItemsList');
+            if (sorted.length === 0) {
+                popContainer.innerHTML = '<div style="color:#b7a394; font-size:14px;">No data for this date</div>';
+            } else {
+                popContainer.innerHTML = sorted.map(([name, count]) =>
+                    `<div class="popular-item"><span>${name}</span><span style="font-weight:700;">${count}</span></div>`
+                ).join('');
+            }
+        }
+
+        // ---------- DOWNLOAD CSV ----------
+        function downloadCSV() {
+            const orders = getOrders();
+            if (orders.length === 0) {
+                showToast('No orders to download');
+                return;
+            }
+
+            const headers = ['Order No', 'Date', 'Time', 'Customer Name', 'Items', 'Quantity', 'Total', 'Status', 'Completion Time'];
+            const rows = orders.map(o => {
+                const itemsList = o.items.map(i => `${i.name}${i.variant ? ' (' + i.variant + ')' : ''} (${i.qty})`).join('; ');
+                const totalQty = o.items.reduce((sum, i) => sum + i.qty, 0);
+                return [
+                    o.orderNo,
+                    o.date,
+                    new Date(o.time).toLocaleTimeString('en-IN'),
+                    o.customer,
+                    itemsList,
+                    totalQty,
+                    o.total,
+                    o.status,
+                    o.completedTime ? new Date(o.completedTime).toLocaleTimeString('en-IN') : ''
+                ];
+            });
+
+            const csv = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `MrFlavoraa_Orders_${todayStr()}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('CSV downloaded');
+        }
+
+        // ---------- BACKUP / RESTORE ----------
+        function exportBackup() {
+            const orders = getOrders();
+            const menu = getMenu();
+            const backup = { orders, menu, exportedAt: new Date().toISOString() };
+            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `MrFlavoraa_Backup_${todayStr()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Backup exported');
+        }
+
+        function triggerImport() {
+            document.getElementById('importFileInput').click();
+        }
+
+        document.getElementById('importFileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                try {
+                    const data = JSON.parse(ev.target.result);
+                    if (data.orders && Array.isArray(data.orders)) {
+                        saveOrders(data.orders);
+                    }
+                    if (data.menu && Array.isArray(data.menu)) {
+                        localStorage.setItem(MENU_KEY, JSON.stringify(data.menu));
+                    }
+                    showToast('Backup imported successfully');
+                    renderDashboard();
+                    showScreen('dashboard');
+                } catch (err) {
+                    showToast('Invalid backup file');
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
+        });
+
+        // ---------- INIT ----------
+        window.onload = function() {
+            document.getElementById('reportDatePicker').value = todayStr();
+            renderDashboard();
+            showScreen('dashboard');
+        };
+
+        // Expose globally
+        window.showScreen = showScreen;
+        window.showNewOrderScreen = showNewOrderScreen;
+        window.selectCategory = selectCategory;
+        window.selectVariant = selectVariant;
+        window.updateItemQty = updateItemQty;
+        window.saveNewOrder = saveNewOrder;
+        window.toggleItemReady = toggleItemReady;
+        window.completeOrder = completeOrder;
+        window.cancelOrder = cancelOrder;
+        window.downloadCSV = downloadCSV;
+        window.exportBackup = exportBackup;
+        window.triggerImport = triggerImport;
+        window.renderReportForDate = renderReportForDate;
+    </script>
+</body>
+</html>
